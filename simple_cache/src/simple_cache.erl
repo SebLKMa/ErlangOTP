@@ -13,6 +13,7 @@ insert(Key, Value) ->
 		{ok, Pid} ->
 			sc_element:replace(Pid, Value);
 		{error, _} ->
+			%{ok, Pid} = sc_element:create(Value, 60), % testing LeaseTime 60 seconds
 			{ok, Pid} = sc_element:create(Value),
 			sc_store:insert(Key, Pid)
 	end.
