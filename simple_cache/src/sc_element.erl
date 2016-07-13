@@ -63,7 +63,7 @@ init([Value, LeaseTime]) ->
 	StartTime = calendar:datetime_to_gregorian_seconds(Now),
 	{ok,
 	 #state{value = Value, lease_time = LeaseTime, start_time = StartTime},
-	 time_left(StartTime, LeaseTime)}.
+	 time_left(StartTime, LeaseTime)}. % {ok, State, Timeout} where timeout is handled by handle_info/2
 
 handle_call(fetch, _From, State) ->
 	#state{value = Value, lease_time = LeaseTime, start_time = StartTime} = State,
@@ -78,10 +78,10 @@ handle_cast(delete, State) ->
 	{stop, normal, State}.
 
 handle_info(timeout, State) ->
-	{stop, normal, State}.
+	{stop, normal, State}. % on timeout, stop self process
 
 terminate(_Reason, _State) ->
-	sc_store:delete(self()).
+	sc_store:delete(self()). % on process termination, delete the Pid Key in ETS
 
 code_change(_OldVsn, State, _Extra) ->
 	{ok, State}.
