@@ -1,7 +1,6 @@
 %% @author user
 %% @doc @todo Add description to sc_sup.
 
-
 -module(sc_sup).
 
 -behaviour(supervisor).
@@ -29,5 +28,4 @@ init([]) ->
 %% ====================================================================
 %% Internal functions
 %% ====================================================================
-
 
