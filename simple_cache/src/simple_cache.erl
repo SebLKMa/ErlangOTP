@@ -15,10 +15,12 @@ insert(Key, Value) ->
 		{error, _} ->
 			%{ok, Pid} = sc_element:create(Value, 60), % testing LeaseTime 60 seconds
 			{ok, Pid} = sc_element:create(Value),
-			sc_store:insert(Key, Pid)
+			sc_store:insert(Key, Pid),
+			sc_event:create(Key, Value) % post a create event
 	end.
 
 lookup(Key) ->
+	sc_event:lookup(Key), % post a lookup event
 	try
 		{ok, Pid} = sc_store:lookup(Key),
 		{ok, Value} = sc_element:fetch(Pid),
