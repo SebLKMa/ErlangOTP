@@ -14,7 +14,8 @@
 		 lookup/1,
 		 create/2,
 		 replace/2,
-		 delete/1
+		 delete/1,
+		 expire/1
 		 ]).
 
 -define(SERVER, ?MODULE).
@@ -39,6 +40,9 @@ replace(Key, Value) ->
 
 delete(Key) ->
 	gen_event:notify(?SERVER, {delete, Key}).
+
+expire(Pid) ->
+	gen_event:notify(?SERVER, {expire, Pid}).
 
 %% ====================================================================
 %% Internal functions

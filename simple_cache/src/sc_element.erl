@@ -78,6 +78,7 @@ handle_cast(delete, State) ->
 	{stop, normal, State}.
 
 handle_info(timeout, State) ->
+	sc_event:expire(self()),
 	{stop, normal, State}. % on timeout, stop self process
 
 terminate(_Reason, _State) ->

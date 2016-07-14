@@ -49,6 +49,9 @@ handle_event({delete, Key}, State) ->
 	{ok, State};
 handle_event({replace, {Key, Value}}, State) ->
 	error_logger:info_msg("replace(~w, ~w)~n", [Key, Value]),
+	{ok, State};
+handle_event({expire, Pid}, State) ->
+	error_logger:info_msg("expire(~w)~n", [Pid]),
 	{ok, State}.
 
 handle_call(_Request, State) ->
