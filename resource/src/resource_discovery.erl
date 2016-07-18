@@ -8,6 +8,9 @@
 
 %% ====================================================================
 %% API functions
+%% Note: 
+%% net_adm:ping/1 must be first called between nodes for nodes() to
+%% return the VM's connected nodes.
 %% ====================================================================
 -export([
 		 start_link/0,
@@ -68,12 +71,10 @@ handle_cast({add_target_resource_type, Type}, State) ->
 	TargetTypes = State#state.target_resource_types,
 	NewTargetTypes = [Type | lists:delete(Type, TargetTypes)],
 	{noreply, State#state{target_resource_types = NewTargetTypes}};
-
 handle_cast({add_local_resource, {Type, Instance}}, State) ->
 	ResourceTuples = State#state.local_resource_tuples,
 	NewResourceTuples = add_resource(Type, Instance, ResourceTuples),
 	{noreply, State#state{local_resource_tuples = NewResourceTuples}};
-
 handle_cast(trade_resources, State) ->
 	ResourceTuples = State#state.local_resource_tuples,
 	AllNodes = [node() | nodes()],
@@ -83,7 +84,6 @@ handle_cast(trade_resources, State) ->
 	  end, 
 	  AllNodes),
 	{noreply, State};
-
 handle_cast({trade_resources, {ReplyTo, Remotes}},
 			#state{local_resource_tuples = Locals,
 				   target_resource_types = TargetTypes,
@@ -103,7 +103,7 @@ handle_info(_Info, State) ->
 	{ok, State}.
 
 terminate(_Reason, State) ->
-	ok.
+	{ok, State}.
 
 code_change(_OldVsn, State, _Extra) ->
 	{ok, State}.
@@ -114,7 +114,7 @@ code_change(_OldVsn, State, _Extra) ->
 add_resource(Type, Resource, ResourceTuples) ->
 	case dict:find(Type, ResourceTuples) of
 		{ok, ResourceList} ->
-			NewList = [Resource | list:delete(Resource, ResourceList)],
+			NewList = [Resource | lists:delete(Resource, ResourceList)],
 			dict:store(Type, NewList, ResourceTuples);
 		error ->
 			dict:store(Type, [Resource], ResourceTuples)
@@ -130,10 +130,12 @@ resources_for_types(Types, ResourceTuples) ->
 		fun(Type, Acc) ->
 			case dict:find(Type, ResourceTuples) of
 				{ok, List} ->
-					[{Type, Instance} || Instance <- List] ++ Acc;
+					[{Type, Resource} || Resource <- List] ++ Acc;
 				error ->
 					Acc
 			end
 		end,
 	lists:foldl(Fun, [], Types).
+
+
 
