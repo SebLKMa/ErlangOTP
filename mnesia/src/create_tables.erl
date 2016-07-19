@@ -39,6 +39,7 @@ insert_user(Id, Name, ProjectTitles) when ProjectTitles =/= [] ->
 	mnesia:transaction(Fun).
 
 insert_project(Title, Description) ->
+	% no transaction or db lock, assuming at worst only description is dirty.
 	mnesia:dirty_write(#project{title = Title, description = Description}).
 
 %% ====================================================================
