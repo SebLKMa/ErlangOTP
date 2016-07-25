@@ -1,5 +1,15 @@
 %% @author LMA
-%% @doc @todo Add description to sc_app.
+%% @doc 
+%% To run the code, start a cluster of 2 contact nodes in separate consoles,
+%% see ensure_contact/0 for the matching node names
+%% $ erl -sname contact1
+%% $ erl -sname contact2
+%% Then start Erlang as follows
+%% $ erl -sname mynode -pa ./simple_cache/ebin -pa ./resource/ebin
+%% > application:start(sasl).
+%% > mnesia:start().
+%% > application:start(resource_discovery).
+%% > application:start(simple_cache).
 
 -module(sc_app).
 
@@ -10,8 +20,18 @@
 %% ====================================================================
 -export([start/2, stop/1]).
 
+-define(WAIT_FOR_RESOURCES, 2500).
+
 start(_StartType, _StartArgs) ->
-	ok = ensure_contact(), % asserts known nodes are up and running
+	% asserts known nodes are up and running
+	ok = ensure_contact(),
+	% what I have
+	resource_discovery:add_local_resource(simple_cache, node()),
+	% what I want
+	resource_discovery:add_target_resource_type(simple_cache),
+	% trade resources with other nodes in cluster
+	resource_discovery:trade_resources(),
+	timer:sleep(?WAIT_FOR_RESOURCES),
 	sc_store:init(),
 	case sc_sup:start_link() of
 		{ok, Pid} ->

@@ -13,6 +13,7 @@
 		 lookup/1]).
 
 -define(TABLE_ID, ?MODULE).
+-define(WAIT_FOR_TABLES, 5000).
 
 %% mnesia record
 -record(key_to_pid, {key, pid}).
@@ -22,14 +23,27 @@
 %	ets:new(?TABLE_ID, [public, named_table]),
 %	ok.
 
-%% mnesia impl
+%% mnesia impl 1
+%% erl must be started with mnesia path, schema must have already created
+%% '"/Users/user/Documents/workspace/mars/github/ErlangOTP/mnesia_storage"'
+%init() ->
+%	mnesia:start(),
+%	mnesia:create_table(key_to_pid,		% table name to create
+%						[{index, pid},	% index to create
+%						 {attributes, record_info(fields, key_to_pid)}]).
+
+%% mnesia impl 2
 %% erl must be started with mnesia path, schema must have already created
 %% '"/Users/user/Documents/workspace/mars/github/ErlangOTP/mnesia_storage"'
 init() ->
+	mnesia:stop(),
+	mnesia:delete_schema([node()]),
 	mnesia:start(),
-	mnesia:create_table(key_to_pid,		% table name to create
-						[{index, pid},	% index to create
-						 {attributes, record_info(fields, key_to_pid)}]).
+	% fetch all simple_cache instances from resource_discovery
+	{ok, CacheNodes} = resource_discovery:fetch_resources(simple_cache),
+	% remove self instance
+	dynamic_db_init(lists:delete(node(), CacheNodes)).
+
 
 %% ets impl
 %insert(Key, Pid) ->
@@ -79,4 +93,25 @@ is_pid_alive(Pid) when node(Pid) =:= node() ->
 is_pid_alive(Pid) ->
 	lists:member(node(Pid), nodes()) andalso
 		(rpc:call(node(Pid), erlang, is_process_alive, [Pid]) =:= true).
+
+dynamic_db_init([]) ->
+	mnesia:create_table(key_to_pid,		% table name to create
+						[{index, pid},	% index to create
+						 {attributes, record_info(fields, key_to_pid)}]);
+dynamic_db_init(CacheNodes) ->
+	add_extra_nodes(CacheNodes).
+
+add_extra_nodes([Node|T]) ->
+	case mnesia:change_config(extra_db_nodes, [Node]) of
+		{ok, [Node]} ->
+			% replaces local schema with remote
+			mnesia:add_table_copy(schema, node(), ram_copies),
+			mnesia:add_table_copy(key_to_pid, node(), ram_copies),
+			% get a list of all existing tables
+			Tables = mnesia:system_info(tables),
+			% wait for newly added table to be synchronized
+			mnesia:wait_for_tables(Tables, ?WAIT_FOR_TABLES);
+		_ ->
+			add_extra_nodes(T) % tries some other nodes instead
+	end.
 

@@ -3,6 +3,7 @@
 	<name>simple_cache</name>
 	<comment></comment>
 	<projects>
+		<project>resource</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
