@@ -4,8 +4,11 @@
 %% see ensure_contact/0 for the matching node names
 %% $ erl -sname contact1
 %% $ erl -sname contact2
+%% OR
+%% $ erl -name contact1@localhost
+%% $ erl -name contact2@localhost
 %% Then start Erlang as follows
-%% $ erl -sname mynode -pa ./simple_cache/ebin -pa ./resource/ebin
+%% $ erl -sname mynode -pa ./simple_cache/ebin -pa ./resource_discovery/ebin
 %% > application:start(sasl).
 %% > mnesia:start().
 %% > application:start(resource_discovery).
