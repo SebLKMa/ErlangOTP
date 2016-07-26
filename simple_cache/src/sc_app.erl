@@ -51,7 +51,8 @@ stop(_State) ->
 %% Internal functions
 %% ====================================================================
 ensure_contact() ->
-	DefaultNodes = ['contact1@localhost', 'contact2@localhost'],
+	%DefaultNodes = ['contact1@localhost', 'contact2@localhost'],
+	DefaultNodes = ['contact1@users-MacBook-Pro', 'contact2@users-MacBook-Pro'],
 	% checks config for nodes
 	case get_env(simple_cache, contact_nodes, DefaultNodes) of
 		[] ->
