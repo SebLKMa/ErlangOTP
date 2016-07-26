@@ -11,7 +11,7 @@
              sc_event_logger
             ]},
   {registered, [sc_sup]},
-  {applications, [kernel, stdlib, sasl, mnesia, resource]},
+  {applications, [kernel, stdlib, sasl, mnesia, resource_discovery]},
   {mod, {sc_app, []}}
  ]
 }.
