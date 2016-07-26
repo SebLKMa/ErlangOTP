@@ -2,7 +2,7 @@
 %% @doc @todo Add description to resource_discovery.
 
 
--module(resource_discovery).
+-module(discovery).
 
 -behaviour(gen_server).
 
