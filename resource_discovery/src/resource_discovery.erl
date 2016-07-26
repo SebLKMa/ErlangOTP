@@ -2,7 +2,7 @@
 %% @doc @todo Add description to resource_descovery.
 
 
--module(resource_descovery).
+-module(resource_discovery).
 
 %% ====================================================================
 %% API functions
