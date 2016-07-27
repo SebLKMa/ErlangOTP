@@ -96,7 +96,7 @@ is_pid_alive(Pid) ->
 
 dynamic_db_init([]) ->
 	mnesia:create_table(key_to_pid,		% table name to create
-						[{index, pid},	% index to create
+						[{index, [pid]},	% index to create
 						 {attributes, record_info(fields, key_to_pid)}]);
 dynamic_db_init(CacheNodes) ->
 	add_extra_nodes(CacheNodes).
