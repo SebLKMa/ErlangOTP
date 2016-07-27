@@ -5,10 +5,12 @@
 %% $ erl -sname contact1
 %% $ erl -sname contact2
 %% OR
-%% $ erl -name contact1@localhost
-%% $ erl -name contact2@localhost
+%% $ erl -name contact1
+%% $ erl -name contact2
 %% Then start Erlang as follows
-%% $ erl -sname mynode -pa ./simple_cache/ebin -pa ./resource_discovery/ebin
+%% $ erl -name mynode -pa ./simple_cache/ebin -pa ./resource_discovery/ebin
+%% OR if using config file in ebin
+%% $ erl -name mynode -config ./simple_cache/ebin/simple_cache.config -pa ./simple_cache/ebin -pa ./resource_discovery/ebin
 %% > application:start(sasl).
 %% > mnesia:start().
 %% > application:start(resource_discovery).
@@ -51,8 +53,9 @@ stop(_State) ->
 %% Internal functions
 %% ====================================================================
 ensure_contact() ->
-	%DefaultNodes = ['contact1@localhost', 'contact2@localhost'],
-	DefaultNodes = ['contact1@users-MacBook-Pro', 'contact2@users-MacBook-Pro'],
+	% configure the hostname in env section of app file.
+	%DefaultNodes = ['contact1@users-MacBook-Pro', 'contact2@users-MacBook-Pro'],
+	DefaultNodes = ['contact1@localhost', 'contact2@localhost'],
 	% checks config for nodes
 	case get_env(simple_cache, contact_nodes, DefaultNodes) of
 		[] ->

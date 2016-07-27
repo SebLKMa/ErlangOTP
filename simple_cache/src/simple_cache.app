@@ -1,5 +1,6 @@
 {application, simple_cache,
  [{description, "Simple Caching System"},
+  {env, [{contact_nodes, ['contact1@LMA02.corp.amdocs.com', 'contact2@LMA02.corp.amdocs.com']}]},
   {vsn, "0.3.0"},
   {modules, [simple_cache,
              sc_app, 
