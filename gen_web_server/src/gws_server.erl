@@ -17,6 +17,12 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 		 terminate/2, code_change/3]).
 
+%% lock - holds the listening socket
+%% socket - holds the dedicated socket
+%% request_line, headers, body, content_remaining - for HTTP protocol
+%% callback - the name of the behaviour implementation module
+%% user_data - application specific data to be passed to callback module
+%% parent - holds the PID of gws_connection_sup process
 -record(state, {lsock, socket, request_line, headers = [],
 				body = <<>>, content_remaining = 0,
 				callback, user_data, parent}).
@@ -25,7 +31,7 @@
 %% API functions
 start_link(Callback, LSock, UserArgs) ->
 	gen_server:start_link(?MODULE,
-						  [Callback, LSock, UserArgs, self()], []).
+						  [Callback, LSock, UserArgs, self()], []). % self is typically the gws_connection_sup process
 
 %% ====================================================================
 %% gen_server callbacks
@@ -43,17 +49,19 @@ handle_cast(_Request, State) ->
 
 handle_info({http, _Sock, {http_request, _, _, _} = Request}, State) ->
 	% handles request lines
-	inet:setopts(State#state.socket, [{active, once}]),
+	inet:setopts(State#state.socket, [{active, once}]), % needed to continue reading from socket
 	{noreply, State#state{request_line = Request}};
 handle_info({http, _Sock, {http_request, _, Name, _, Value}}, State) ->
 	% handles headers
-	inet:setopts(State#state.socket, [{active, once}]),
-	{noreply, header(Name, Value, State)};
+	inet:setopts(State#state.socket, [{active, once}]), % needed to continue reading from socket
+	{noreply, header(Name, Value, State)}; % accumulates the headers in a list in server state
 handle_info({http, _Sock, http_eoh}, #state{content_remaining = 0} = State) ->
 	% handles end of header, body is empty
 	{stop, normal, handle_http_request(State)};
 handle_info({http, _Sock, http_eoh}, State) ->
-	% handles end of header, prepare for body
+	% handles end of header, prepares for body
+	% switching to {packet, raw} to stop parsing data as HTTP format, 
+	% data would end up in below handle_info as {tcp, Socket, Data}
 	inet:setopts(State#state.socket, [{active, once}, {packet, raw}]),
 	{noreply, State};
 handle_info({tcp, _Sock, Data}, State) when is_binary(Data) ->
@@ -62,7 +70,7 @@ handle_info({tcp, _Sock, Data}, State) when is_binary(Data) ->
 	NewState = State#state{body = Body,
 						   content_remaining = ContentRem},
 	if	(ContentRem > 0) ->
-			inet:setopts(State#state.socket, [{active, once}]),
+			inet:setopts(State#state.socket, [{active, once}]), % needed to continue reading from socket
 			{noreply, NewState};
 		true ->
 			{stop, normal, handle_http_request(NewState)}
@@ -71,10 +79,11 @@ handle_info({tcp_closed, _Sock}, State) ->
 	{stop, normal, State};
 handle_info(timeout, #state{lsock = LSock, parent = Parent} = State) ->
 	% waits for connection and starts new handler
+	% typically when init/1 completes
 	{ok, Socket} = gen_tcp:accept(LSock),
 	gws_connection_sup:start_child(Parent),
-	inet:setopts(Socket, [{active, once}]),
-	{noreply, State#state{socket = Socket}}.
+	inet:setopts(Socket, [{active, once}]), % needed to continue reading from socket
+	{noreply, State#state{socket = Socket}}. % dedicated socket is set to {active,once}
 
 terminate(_Reason, _State) ->
 	ok.
@@ -92,6 +101,7 @@ header('Content-Length' = Name, Value, State) ->
 	State#state{content_remaining = ContentLength,
 				headers = [{Name, Value} | State#state.headers]};
 header(<<"Expect">> = Name, <<"100-continue">> = Value, State) ->
+	% must send HTTP reply "100 Continue" so that client will not pause
 	gen_tcp:send(State#state.socket, gen_web_server:http_reply(100)),
 	State#state{headers = [{Name, Value} | State#state.headers]};
 header(Name, Value, State) ->

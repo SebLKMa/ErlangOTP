@@ -35,7 +35,7 @@ start_child(Server) ->
 init([Callback, IP, Port, UserArgs]) ->
 	BasicSockOpts = [binary,		     % not strings
 					 {active, false},    % passive, this influences message reads
-					 {packet, http_bin}, % incoming expected to be HTTP formatted
+					 {packet, http_bin}, % incoming data expected to be HTTP formatted and parsed
 					 {reuseaddr, true}], % local port numbers to be reused asap
 	SockOpts = case IP of
 					undefined -> BasicSockOpts;
