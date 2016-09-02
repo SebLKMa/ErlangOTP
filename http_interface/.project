@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>http_interface</name>
+	<comment></comment>
+	<projects>
+		<project>gen_web_server</project>
+		<project>simple_cache</project>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.erlide.core.erlbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.erlide.core.erlnature</nature>
+	</natures>
+</projectDescription>
